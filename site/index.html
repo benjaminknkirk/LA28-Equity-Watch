@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LA28 Equity Watch — Mapping Access to Olympic Investment Across Los Angeles</title>
+  <meta name="description" content="Research prototype analyzing proximity of LA28 venues and Metro Twenty-Eight by '28 projects relative to CalEnviroScreen disadvantage in Los Angeles County." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <p class="eyebrow">Research prototype · Los Angeles County</p>
+    <h1>LA28 Equity Watch</h1>
+    <p class="subtitle">Mapping Access to Olympic Investment Across Los Angeles</p>
+    <p class="byline">Benjamin Kirk</p>
+  </header>
+
+  <main>
+    <section id="summary">
+      <h2>Summary</h2>
+      <p>
+        This project measures whether census tracts with higher CalEnviroScreen disadvantage
+        in Los Angeles County are closer to curated LA28 venue locations and whether Metro’s
+        Twenty-Eight by ’28 project points would improve rail-relative proximity more for
+        burdened tracts than for less burdened ones. Under a transparent inverse-distance
+        formula, <strong>venue proximity rises with disadvantage</strong>, while
+        <strong>accessibility change from 28×28 points shows only a weak (slightly negative)
+        association</strong> with disadvantage—and a null OLS relationship with CES percentile.
+        Full methods are documented for replication.
+      </p>
+    </section>
+
+    <section id="map">
+      <h2>Interactive map</h2>
+      <p class="note">Choropleth: CalEnviroScreen percentile. Markers: LA28 venues (dark) and 28×28 points (green).</p>
+      <div class="map-frame">
+        <iframe title="Interactive CalEnviroScreen map" src="maps/interactive_ces_map.html" loading="lazy"></iframe>
+      </div>
+      <figure>
+        <img src="assets/choropleth_ces_investments.png" alt="Static choropleth of CalEnviroScreen with venues and 28x28 points" />
+        <figcaption>Static primary map (high-resolution PNG for the PDF brief).</figcaption>
+      </figure>
+    </section>
+
+    <section id="findings">
+      <h2>Key findings</h2>
+      <ul>
+        <li>Spearman ρ between CES disadvantage decile and accessibility change ≈ <strong>−0.09</strong> (p &lt; 0.001): weak negative association.</li>
+        <li>OLS of accessibility change on CES percentile: <strong>R² ≈ 0.000</strong> (p ≈ 0.94) — null linear relationship.</li>
+        <li>Spearman ρ between CES disadvantage decile and venue access ≈ <strong>+0.20</strong> (p &lt; 0.001): higher-burden tracts tend to be closer to venues.</li>
+        <li>About <strong>37%</strong> of tracts have a 28×28 representative point closer than their nearest Metro rail stop.</li>
+      </ul>
+      <div class="charts">
+        <figure>
+          <img src="assets/access_change_by_decile.png" alt="Bar chart of mean accessibility change by CES decile" />
+          <figcaption>Mean accessibility change by CES disadvantage decile.</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/venue_distance_by_decile.png" alt="Line chart of median venue distance by CES decile" />
+          <figcaption>Median distance to nearest LA28 venue by CES decile.</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/scatter_access_vs_ces.png" alt="Scatter plot of accessibility change versus CES percentile" />
+          <figcaption>Tract-level accessibility change vs CES percentile with OLS fit.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="methods">
+      <h2>Methodology (summary)</h2>
+      <p>
+        Analysis uses 2010 census tracts for Los Angeles County, joined to CalEnviroScreen 4.0,
+        Healthy Places Index 3.0 (validation), ACS 2019 demographics, Metro GTFS rail stops,
+        and curated venue / 28×28 points. Accessibility change equals the increase in
+        inverse-distance access when 28×28 points are allowed to substitute for the nearest
+        rail stop. Venue and project coordinates were manually curated and geocoded from public
+        lists (not official GIS exports).
+      </p>
+      <p><a href="METHODOLOGY.md">Read the full METHODOLOGY.md</a>.</p>
+    </section>
+
+    <section id="limitations">
+      <h2>Limitations</h2>
+      <ul>
+        <li>Corridor projects are represented as points; Euclidean distance is not travel time.</li>
+        <li>No Games shuttle / GETS network is modeled.</li>
+        <li>Manual geocoding introduces placement uncertainty—author QA recommended before publication.</li>
+        <li>Indices describe baseline community conditions, not Olympic impacts.</li>
+      </ul>
+    </section>
+
+    <section id="downloads">
+      <h2>Downloads</h2>
+      <ul>
+        <li><a href="assets/LA28_Equity_Watch_Brief.pdf">Research brief (PDF)</a></li>
+        <li><a href="assets/LA28_Equity_Watch_Brief.md">Research brief (Markdown source)</a></li>
+        <li><a href="assets/choropleth_ces_investments.png">Primary map (PNG)</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Attribution: CalEnviroScreen 4.0 (OEHHA); Healthy Places Index (Public Health Alliance / PHI via LA County Open Data);
+      ACS &amp; TIGER (U.S. Census Bureau); GTFS (LA Metro). Venue and 28×28 inventories curated from public sources.
+    </p>
+    <p>Contact: Benjamin Kirk · <a href="mailto:benjaminknkirk@gmail.com">benjaminknkirk@gmail.com</a></p>
+  </footer>
+</body>
+</html>

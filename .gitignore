@@ -1,0 +1,37 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.key
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Large raw downloads (re-fetchable via scripts)
+data/raw/**
+!data/raw/.gitkeep
+!data/raw/README.md
+
+# Temporary
+tmp/
+.cache/
+
+# Generated geospatial intermediates (rebuild via scripts)
+data/processed/*.geojson
+data/processed/*.parquet
+data/raw/acs/**
+
+# Lockfile optional
+# requirements.lock.txt

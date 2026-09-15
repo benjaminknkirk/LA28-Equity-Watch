@@ -1,0 +1,29 @@
+{
+  "n_tracts": 2346,
+  "n_complete_ces": 2297,
+  "spearman_access_change_vs_ces_decile": {
+    "correlation": -0.09326533948897309,
+    "pvalue": 7.560754608323072e-06
+  },
+  "spearman_venue_access_vs_ces_decile": {
+    "correlation": 0.19569567328271512,
+    "pvalue": 2.9168551971036184e-21
+  },
+  "ols_access_change_on_ces_percentile": {
+    "slope": 4.6294631472385115e-06,
+    "intercept": 0.03198657861661731,
+    "r_squared": 2.7804482946420854e-06,
+    "pvalue": 0.9363380076537741,
+    "std_err": 5.7953713687933816e-05
+  },
+  "spearman_access_change_vs_hpi_decile": {
+    "correlation": -0.06716887924342765,
+    "pvalue": 0.0013948160852306347
+  },
+  "mean_access_change": 0.03257912936948175,
+  "share_project_improves_proximity": 0.36828644501278773,
+  "baseline_stop_feed": "rail",
+  "n_venues": 34,
+  "n_projects": 28,
+  "n_baseline_stops": 463
+}
