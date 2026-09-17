@@ -1,27 +1,32 @@
 """
 DATA DICTIONARY — ACS 2019 5-year estimates (LA County tracts, 2010 geography)
 
-Variables:
-  B01003_001E — Total population
-  B19013_001E — Median household income (2019 inflation-adjusted dollars)
-  B08201_001E — Total households (vehicles-available universe)
-  B08201_002E — Households with no vehicle available
+Socioeconomic / demographic variables for the Equity Watch disadvantage framework:
 
-Derived:
-  pct_no_vehicle = hh_no_vehicle / households
+  population              B01003_001E
+  median_hh_income        B19013_001E
+  households              B08201_001E
+  hh_no_vehicle           B08201_002E
+  pct_no_vehicle          derived
+  poverty_universe        B17001_001E
+  poverty_count           B17001_002E
+  poverty_rate            derived
+  rent_universe           B25070_001E
+  rent_burden_30plus      sum B25070_007E..010E (≥30% of income on rent)
+  pct_rent_burden_30plus  derived
+  occupied_units          B25014_001E
+  overcrowded_units       owner+renter 1.01+ occupants/room cells
+  pct_overcrowded         derived (housing vulnerability proxy)
+  race_universe           B03002_001E
+  pct_hispanic            B03002_012E / univ
+  pct_nh_black            B03002_004E / univ
+  pct_nh_asian            B03002_006E / univ
+  pct_nh_white            B03002_003E / univ
 
-Access strategy (in order):
-  1. Census Data API if CENSUS_API_KEY is set (.env)
-  2. Else ACS 2019 Summary File sequences for California tracts (no key required):
-       sequences 0002 (B01003), 0027 (B08201), 0058 (B19013)
-       https://www2.census.gov/programs-surveys/acs/summary_file/2019/data/5_year_seq_by_state/California/Tracts_Block_Groups_Only/
-
-Columns in data/processed/acs_la_2019.csv:
-  geoid10, name, population, median_hh_income, households, hh_no_vehicle, pct_no_vehicle
+Access: Census API if CENSUS_API_KEY set; else ACS 2019 Summary File sequences.
 """
 from __future__ import annotations
 
-import io
 import os
 import sys
 import zipfile
@@ -42,40 +47,88 @@ from src import (  # noqa: E402
     zfill_geoid10,
 )
 
-VARS = ["NAME", "B01003_001E", "B19013_001E", "B08201_001E", "B08201_002E"]
-
 SF_BASE = (
     "https://www2.census.gov/programs-surveys/acs/summary_file/2019/data/"
     "5_year_seq_by_state/California/Tracts_Block_Groups_Only"
 )
-# Sequence → (estimate column positions, 0-based after FILEID..LOGRECNO prefix of 6 cols)
-# Estimate files: FILEID, FILETYPE, STUSAB, CHARITER, SEQUENCE, LOGRECNO, then estimates…
-# B01003 total = first estimate in seq 0002 after many other tables — use template positions.
-# Safer approach: use Census sequence templates / known positions from lookup:
-# For seq 0002, B01003 starts at estimate position per lookup line "130" → column index.
-#
-# From ACS_5yr_Seq_Table_Number_Lookup.txt:
-#   B01003 seq 0002 position 130 → 1 cell (Total)
-#   B08201 seq 0027 position 75 → cell1 Total, cell2 No vehicle
-#   B19013 seq 0058 position 177 → 1 cell Median income
-#
-# Positions in the lookup are 1-based positions WITHIN the estimate portion of the sequence file.
 
+# Absolute 0-based columns from 2019_5yr_Summary_FileTemplates.zip
+SEQ_SPECS = {
+    "0002": {"zip": "20195ca0002000.zip", "est": "e20195ca0002000.txt", "cols": {129: "B01003_001E"}},
+    "0004": {
+        "zip": "20195ca0004000.zip",
+        "est": "e20195ca0004000.txt",
+        "cols": {
+            37: "B03002_001E",
+            39: "B03002_003E",
+            40: "B03002_004E",
+            42: "B03002_006E",
+            48: "B03002_012E",
+        },
+    },
+    "0027": {
+        "zip": "20195ca0027000.zip",
+        "est": "e20195ca0027000.txt",
+        "cols": {74: "B08201_001E", 75: "B08201_002E"},
+    },
+    "0047": {
+        "zip": "20195ca0047000.zip",
+        "est": "e20195ca0047000.txt",
+        "cols": {6: "B17001_001E", 7: "B17001_002E"},
+    },
+    "0058": {"zip": "20195ca0058000.zip", "est": "e20195ca0058000.txt", "cols": {176: "B19013_001E"}},
+    "0111": {
+        "zip": "20195ca0111000.zip",
+        "est": "e20195ca0111000.txt",
+        "cols": {
+            182: "B25014_001E",
+            186: "B25014_005E",
+            187: "B25014_006E",
+            188: "B25014_007E",
+            192: "B25014_011E",
+            193: "B25014_012E",
+            194: "B25014_013E",
+        },
+    },
+    "0114": {
+        "zip": "20195ca0114000.zip",
+        "est": "e20195ca0114000.txt",
+        "cols": {
+            112: "B25070_001E",
+            118: "B25070_007E",
+            119: "B25070_008E",
+            120: "B25070_009E",
+            121: "B25070_010E",
+        },
+    },
+}
 
-def fetch_via_api(api_key: str) -> pd.DataFrame:
-    url = f"https://api.census.gov/data/{ACS_YEAR}/acs/acs5"
-    params = {
-        "get": ",".join(VARS),
-        "for": "tract:*",
-        "in": f"state:{STATE_FIPS} county:{COUNTY_FIPS}",
-        "key": api_key,
-    }
-    r = requests.get(url, params=params, timeout=180)
-    if r.status_code != 200:
-        raise RuntimeError(f"Census API error {r.status_code}: {r.text[:300]}")
-    data = r.json()
-    header, *rows = data
-    return pd.DataFrame(rows, columns=header)
+API_VARS = [
+    "NAME",
+    "B01003_001E",
+    "B19013_001E",
+    "B08201_001E",
+    "B08201_002E",
+    "B17001_001E",
+    "B17001_002E",
+    "B25070_001E",
+    "B25070_007E",
+    "B25070_008E",
+    "B25070_009E",
+    "B25070_010E",
+    "B25014_001E",
+    "B25014_005E",
+    "B25014_006E",
+    "B25014_007E",
+    "B25014_011E",
+    "B25014_012E",
+    "B25014_013E",
+    "B03002_001E",
+    "B03002_003E",
+    "B03002_004E",
+    "B03002_006E",
+    "B03002_012E",
+]
 
 
 def _download(url: str, dest: Path) -> None:
@@ -88,11 +141,24 @@ def _download(url: str, dest: Path) -> None:
 
 
 def _read_estimate_file(path: Path) -> pd.DataFrame:
-    # No header; comma-separated
     df = pd.read_csv(path, header=None, dtype=str, low_memory=False)
-    # cols 0-5 metadata; col 5 = LOGRECNO
-    df = df.rename(columns={5: "LOGRECNO"})
-    return df
+    return df.rename(columns={5: "LOGRECNO"})
+
+
+def fetch_via_api(api_key: str) -> pd.DataFrame:
+    url = f"https://api.census.gov/data/{ACS_YEAR}/acs/acs5"
+    # Census API limits ~50 vars; split if needed
+    params = {
+        "get": ",".join(API_VARS),
+        "for": "tract:*",
+        "in": f"state:{STATE_FIPS} county:{COUNTY_FIPS}",
+        "key": api_key,
+    }
+    r = requests.get(url, params=params, timeout=180)
+    if r.status_code != 200:
+        raise RuntimeError(f"Census API error {r.status_code}: {r.text[:300]}")
+    header, *rows = r.json()
+    return pd.DataFrame(rows, columns=header)
 
 
 def fetch_via_summary_file(work: Path) -> pd.DataFrame:
@@ -100,51 +166,39 @@ def fetch_via_summary_file(work: Path) -> pd.DataFrame:
     geo_path = work / "g20195ca.csv"
     _download(f"{SF_BASE}/g20195ca.csv", geo_path)
 
-    sequences = {
-        "0002": {"zip": "20195ca0002000.zip", "est": "e20195ca0002000.txt"},
-        "0027": {"zip": "20195ca0027000.zip", "est": "e20195ca0027000.txt"},
-        "0058": {"zip": "20195ca0058000.zip", "est": "e20195ca0058000.txt"},
-    }
-    for seq, meta in sequences.items():
+    frames = []
+    for seq, meta in SEQ_SPECS.items():
         zpath = work / meta["zip"]
         _download(f"{SF_BASE}/{meta['zip']}", zpath)
         out_dir = work / f"seq{seq}"
         out_dir.mkdir(exist_ok=True)
         with zipfile.ZipFile(zpath) as zf:
             zf.extractall(out_dir)
+        e = _read_estimate_file(out_dir / meta["est"])
+        keep = ["LOGRECNO"] + list(meta["cols"].keys())
+        part = e[keep].rename(columns=meta["cols"])
+        frames.append(part)
 
-    # Geography file: Latin-1 encoded; SUMLEVEL col index 2, LOGRECNO col 4, GEOID-ish near end
+    merged = frames[0]
+    for part in frames[1:]:
+        merged = merged.merge(part, on="LOGRECNO", how="outer")
+
     geo = pd.read_csv(geo_path, header=None, dtype=str, encoding="latin-1", low_memory=False)
-    # ACS SF geo layout (2019): 
-    # 0 FILEID, 1 STUSAB, 2 SUMLEVEL, 3 COMPONENT, 4 LOGRECNO, ... 
-    # GEOID is typically column 48 (0-based) as '14000US06037101110'
-    # NAME is column 49
     geo = geo.rename(columns={2: "SUMLEVEL", 4: "LOGRECNO", 48: "GEOID", 49: "NAME"})
     tracts = geo[geo["SUMLEVEL"] == "140"].copy()
     tracts["geoid10"] = tracts["GEOID"].str.replace("14000US", "", regex=False)
     tracts = tracts[tracts["geoid10"].str.startswith(STATE_FIPS + COUNTY_FIPS)]
     tracts = tracts[["LOGRECNO", "geoid10", "NAME"]]
-
-    e0002 = _read_estimate_file(work / "seq0002" / "e20195ca0002000.txt")
-    e0027 = _read_estimate_file(work / "seq0027" / "e20195ca0027000.txt")
-    e0058 = _read_estimate_file(work / "seq0058" / "e20195ca0058000.txt")
-
-    # Absolute 0-based column indices from 2019_5yr_Summary_FileTemplates.zip
-    # (seq2.xlsx / seq27.xlsx / seq58.xlsx headers).
-    pop = e0002[["LOGRECNO", 129]].rename(columns={129: "B01003_001E"})
-    veh_total = e0027[["LOGRECNO", 74]].rename(columns={74: "B08201_001E"})
-    veh_none = e0027[["LOGRECNO", 75]].rename(columns={75: "B08201_002E"})
-    income = e0058[["LOGRECNO", 176]].rename(columns={176: "B19013_001E"})
-
-    out = tracts.merge(pop, on="LOGRECNO", how="left")
-    out = out.merge(veh_total, on="LOGRECNO", how="left")
-    out = out.merge(veh_none, on="LOGRECNO", how="left")
-    out = out.merge(income, on="LOGRECNO", how="left")
-    # Fabricate API-like columns for shared cleaner
+    out = tracts.merge(merged, on="LOGRECNO", how="left")
     out["state"] = STATE_FIPS
     out["county"] = COUNTY_FIPS
     out["tract"] = out["geoid10"].str[-6:]
     return out
+
+
+def _num(s: pd.Series) -> pd.Series:
+    v = pd.to_numeric(s, errors="coerce")
+    return v.mask(v < 0)
 
 
 def clean(df: pd.DataFrame) -> pd.DataFrame:
@@ -156,9 +210,23 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["geoid10"] = df["geoid10"].map(zfill_geoid10)
 
-    for col in ["B01003_001E", "B19013_001E", "B08201_001E", "B08201_002E"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-        df.loc[df[col] < 0, col] = pd.NA
+    for col in [c for c in df.columns if c.startswith("B")]:
+        df[col] = _num(df[col])
+
+    rent_burden = (
+        df["B25070_007E"].fillna(0)
+        + df["B25070_008E"].fillna(0)
+        + df["B25070_009E"].fillna(0)
+        + df["B25070_010E"].fillna(0)
+    )
+    overcrowded = (
+        df["B25014_005E"].fillna(0)
+        + df["B25014_006E"].fillna(0)
+        + df["B25014_007E"].fillna(0)
+        + df["B25014_011E"].fillna(0)
+        + df["B25014_012E"].fillna(0)
+        + df["B25014_013E"].fillna(0)
+    )
 
     out = pd.DataFrame(
         {
@@ -168,15 +236,33 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
             "median_hh_income": df["B19013_001E"],
             "households": df["B08201_001E"],
             "hh_no_vehicle": df["B08201_002E"],
+            "poverty_universe": df["B17001_001E"],
+            "poverty_count": df["B17001_002E"],
+            "rent_universe": df["B25070_001E"],
+            "rent_burden_30plus": rent_burden,
+            "occupied_units": df["B25014_001E"],
+            "overcrowded_units": overcrowded,
+            "race_universe": df["B03002_001E"],
+            "nh_white": df["B03002_003E"],
+            "nh_black": df["B03002_004E"],
+            "nh_asian": df["B03002_006E"],
+            "hispanic": df["B03002_012E"],
         }
     )
     out["pct_no_vehicle"] = out["hh_no_vehicle"] / out["households"]
+    out["poverty_rate"] = out["poverty_count"] / out["poverty_universe"]
+    out["pct_rent_burden_30plus"] = out["rent_burden_30plus"] / out["rent_universe"]
+    out["pct_overcrowded"] = out["overcrowded_units"] / out["occupied_units"]
+    out["pct_hispanic"] = out["hispanic"] / out["race_universe"]
+    out["pct_nh_black"] = out["nh_black"] / out["race_universe"]
+    out["pct_nh_asian"] = out["nh_asian"] / out["race_universe"]
+    out["pct_nh_white"] = out["nh_white"] / out["race_universe"]
+
     out = out.drop_duplicates("geoid10").sort_values("geoid10").reset_index(drop=True)
     if len(out) < 2000:
         raise ValueError(f"Unexpectedly few ACS tracts: {len(out)}")
-    # sanity: population should be mostly non-null
     if out["population"].isna().mean() > 0.1:
-        raise ValueError("Too many missing population values — check sequence column mapping")
+        raise ValueError("Too many missing population values")
     return out
 
 
@@ -184,13 +270,12 @@ def main() -> None:
     load_dotenv()
     ensure_dirs(DATA_RAW / "acs", DATA_PROCESSED)
     api_key = os.environ.get("CENSUS_API_KEY", "").strip()
-
     if api_key:
         print(f"Fetching ACS {ACS_YEAR} via Census API…")
         raw = fetch_via_api(api_key)
         source = "census_api"
     else:
-        print(f"No CENSUS_API_KEY — using ACS {ACS_YEAR} Summary File (no key)…")
+        print(f"No CENSUS_API_KEY — using ACS {ACS_YEAR} Summary File…")
         raw = fetch_via_summary_file(DATA_RAW / "acs" / "summary2019")
         source = "summary_file"
 
@@ -200,7 +285,7 @@ def main() -> None:
     out_path = DATA_PROCESSED / "acs_la_2019.csv"
     cleaned.to_csv(out_path, index=False)
     print(f"  source={source} rows={len(cleaned)} → {out_path}")
-    print(cleaned[["population", "median_hh_income", "pct_no_vehicle"]].describe())
+    print(cleaned[["poverty_rate", "pct_rent_burden_30plus", "pct_overcrowded", "pct_no_vehicle"]].describe())
 
 
 if __name__ == "__main__":

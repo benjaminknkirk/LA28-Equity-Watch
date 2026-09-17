@@ -2,141 +2,140 @@
 
 **Author:** Benjamin Kirk  
 **Study area:** Los Angeles County census tracts (2010 boundaries)  
-**Prototype scope:** Reproducible pipeline and static research brief supporting a Fulbright proposal comparing Olympic legacy measurement (LA28 → Brisbane 2032).
-
-This document records every methodological choice, data source, and limitation for the Phase 1–5 analysis. Findings language in the brief is generated from pipeline outputs and should be rewritten by the author before formal publication.
+**Role:** Reproducible prototype and Fulbright predecessor (LA28 → Brisbane 2032 / Hickman)
 
 ---
 
 ## 1. Research question
 
-Do planned LA28-related investments (Olympic venues and Metro’s Twenty-Eight by ’28 projects) disproportionately improve proximity for historically disadvantaged census tracts in Los Angeles County, relative to less burdened tracts?
+> How are LA28-related infrastructure investments and accessibility gains distributed across communities with different levels of socioeconomic disadvantage?
 
-“Disadvantage” is measured primarily with CalEnviroScreen 4.0 and validated with Healthy Places Index 3.0. “Access” is measured with a transparent proximity formula (not travel time or ridership).
+This is an **equity-of-distribution** question (not a generic “who benefits?” slogan). Continuity with Brisbane: the same question can be asked earlier in the planning cycle with stronger transport models.
 
 ---
 
-## 2. Geographic unit and vintage
+## 2. Unit of analysis
 
-| Choice | Decision | Rationale |
+| Choice | Decision | Why |
 | --- | --- | --- |
-| Study area | Los Angeles County only | Aligns CES, HPI (LA County open data), ACS, and TIGER tracts without multi-county index reconciliation |
-| Tract vintage | **2010** census tracts | CalEnviroScreen 4.0 and HPI 3.0 (API / county publish) use 2010 geography |
-| Boundary source | Census TIGER/Line 2010 (`tl_2010_06037_tract10`) | Official tract polygons matching index vintages |
-| Venues outside county | Included as distance targets | Honda Center, Trestles, etc. can still affect LA County tract distances without requiring Orange County sociodemographic joins |
+| Geography | **2010 census tracts**, Los Angeles County | Matches CalEnviroScreen 4.0 & HPI 3.0; defensible small-area unit |
+| Boundaries | Census TIGER/Line 2010 | Official polygons |
+| Outside-county venues | Included as distance/network targets only | No multi-county SES reconciliation |
 
 ---
 
-## 3. Data sources
+## 3. Socioeconomic disadvantage framework
 
-### 3.1 CalEnviroScreen 4.0 (primary disadvantage index)
+### Indicators (ACS 2019 5-year + CES)
 
-- **Publisher:** California OEHHA  
-- **Access:** Public ArcGIS Feature Service (no key)  
-- **Filter:** Tract IDs `6037*` (LA County without leading zero)  
-- **Orientation:** Higher score / percentile = greater cumulative burden  
-- **Script:** `src/acquire/fetch_calenviroscreen.py`  
-- **Output:** `data/processed/calenviroscreen_la.csv`
+1. Poverty rate  
+2. Median household income (**inverted**)  
+3. % households with no vehicle  
+4. % renter households with rent ≥30% of income  
+5. % overcrowded units (>1 occupant/room) — housing vulnerability proxy  
+6. CalEnviroScreen 4.0 percentile  
 
-### 3.2 Healthy Places Index 3.0 (validation index)
+Each indicator is converted to a county z-score; the **composite disadvantage index** is the equal-weight mean of available z-scores. Quartiles/deciles are county-relative.
 
-- **Publisher:** Public Health Alliance of Southern California / Public Health Institute  
-- **Access used:** LA County Open Data Feature Service layer “HPI Score (3.0)” (public; no personal API key required for LA County)  
-- **Provenance note on service:** HPI 3.0 file acquired 2022-04-25 from PHI  
-- **Orientation:** Higher HPI = healthier; we invert percentile → `disadvantage_pctile = 1 - hpi_percentile`  
-- **Official API alternative:** Requires Google SSO account at map.healthyplacesindex.org (see `docs/hpi_registration_status.md`) — **not completed in this environment**  
-- **Script:** `src/acquire/fetch_hpi.py`
+**Race/ethnicity** (Hispanic, NH Black, NH Asian, NH White shares) are retained as **covariates** for stratified description but are **not** in the default index (to avoid collapsing structural racism into a single SES score without explicit theory). HPI 3.0 validates orientation.
 
-### 3.3 American Community Survey 2019 5-year
-
-- **Why 2019:** Last ACS 5-year release on **2010** tract boundaries  
-- **Variables:** population (B01003), median household income (B19013), households / no-vehicle (B08201)  
-- **Access:** Census Summary File sequences for California tracts (no API key). Census Data API path available if `CENSUS_API_KEY` is set.  
-- **Script:** `src/acquire/fetch_acs.py`
-
-### 3.4 LA Metro GTFS (baseline transit)
-
-- **Feeds:** Bus + rail evergreen zips from LACMTA GitLab  
-- **Role:** Existing high-capacity baseline = **rail stops** (n≈463) for nearest-stop distance  
-- **Script:** `src/acquire/fetch_gtfs.py`
-
-### 3.5 LA28 venues (manually curated)
-
-- **Not available** as an official machine-readable coordinate file from LA28  
-- **Compiled from:** Wikipedia “Venues of the 2028 Summer Olympics and Paralympics” (public list)  
-- **Coordinates:** Nominatim/OpenStreetMap geocoding with documented queries (`data/curated/la28_venues_seed.csv`)  
-- **Exclusions from distance set:** Oklahoma City venues and non-California football prelim sites (not regional LA investments)  
-- **Script:** `src/acquire/build_investment_points.py`  
-- **Flag for author QA:** Spot-check geocodes against official venue maps before publication
-
-### 3.6 Metro Twenty-Eight by ’28 (manually curated)
-
-- **Not available** as a public GeoJSON of all 28 projects  
-- **Compiled from:** Metro Board Report 2023-0756 Attachment A (approved March 2024) and Wikipedia summary of the revised list  
-- **Coordinates:** Curated representative points (station / corridor midpoints / interchange proxies) in `data/curated/metro_28x28_seed.csv`  
-- **Limitation:** Linear corridor projects are represented as **points**, which understates coverage along the full alignment and can mis-rank tracts near a corridor but far from the chosen proxy
+Script: `src/analyze/build_disadvantage_index.py` → `data/processed/disadvantage_index.csv`
 
 ---
 
-## 4. Accessibility change formula
+## 4. Investment inventory (geocoded, sourced)
 
-For each tract, take a representative point inside the polygon. Project to **EPSG:3310** (California Albers). Compute Euclidean distances (km):
+| Type | Source | Notes |
+| --- | --- | --- |
+| Competition venues | Wikipedia LA28 venues list + Nominatim | Manual curation; QA recommended |
+| Olympic Village / training-related | UCLA | Tagged in venue inventory |
+| Transit (rail/BRT/bus lanes) | Metro Board 2023-0756 Attachment A | Representative points for corridors |
+| Mobility hubs / access | Same | Point proxies |
+| Active transport / public realm | Rail-to-Rail; LA River bike path | Point proxies |
+| Highway / ICM | I-5, I-105, I-405, SR 57/60 | Included for program completeness; interpreted cautiously |
 
-- \(d_{stop}\): nearest existing Metro **rail** stop  
-- \(d_{28}\): nearest Twenty-Eight by ’28 project point  
-- \(d_{venue}\): nearest LA28 venue point  
-
-Inverse-distance accessibility:
-
-\[
-A(d) = \frac{1}{1 + d}
-\]
-
-- Baseline: \(A_{base} = A(d_{stop})\)  
-- Planned: \(A_{plan} = A(\min(d_{stop}, d_{28}))\)  
-- **Accessibility change:** \(\Delta A = A_{plan} - A_{base}\)  
-
-\(\Delta A > 0\) only when a 28×28 point is closer than the nearest rail stop. This is a **conservative proximity proxy**, not a network travel-time, frequency, or ridership model.
-
-Venue proximity is analyzed separately as \(A(d_{venue})\).
-
-County-relative disadvantage deciles (1–10) are computed from CES percentile and inverted HPI percentile within LA County tracts with non-missing values.
+**Not available as official GeoJSON:** LA28 venue coordinates and full 28×28 geometries — curated CSVs document every source and geocode method.
 
 ---
 
-## 5. Statistical tests
+## 5. Accessibility methods
 
-1. Spearman rank correlation: CES county decile vs \(\Delta A\)  
-2. Spearman: CES county decile vs venue access  
-3. OLS: \(\Delta A \sim\) CES statewide percentile  
-4. Validation Spearman: HPI disadvantage decile vs \(\Delta A\)
+### 5.1 Baseline (pre–Games-related change)
 
-No causal claim is made. Multiple comparisons are not adjusted (exploratory prototype).
+- Network-adjusted **walking minutes** to nearest venue and nearest Metro rail stop  
+- Default: Euclidean km × **1.35 detour factor** / 4.5 km/h walk speed  
+- Threshold counts: destinations within **15 / 30 / 45** minutes  
+- **GTFS rail network graph**: edges from consecutive `stop_times`; multimodal minutes = walk-to-rail + in-vehicle rail to venue-serving stop  
+
+### 5.2 Prospective change
+
+Accessibility index \(A(d) = 1/(1 + d_{\mathrm{network}})\) where \(d_{\mathrm{network}}\) is detour-adjusted km.  
+\(\Delta A = A(\min(d_{\mathrm{rail}}, d_{28\times28})) - A(d_{\mathrm{rail}})\).
+
+### 5.3 Scenarios
+
+| ID | Definition |
+| --- | --- |
+| S0 | Current rail walk access only |
+| S1 | Rail + 28×28 Operational & Under construction |
+| S2 | Rail + all announced 28×28 (full prospective) |
+| S3 | Rail + Operational only (selected projects delayed/excluded) |
+
+### 5.4 Sensitivity
+
+- Detour factors 1.20 / 1.35 / 1.50  
+- Thresholds 15 / 30 / 45  
+- Facility sets: venues / projects / both  
+- SES: composite vs CES quartiles  
+
+**OSM note:** Full Overpass download failed in this environment (SSL). Code prefers `data/raw/osm/la_walk.graphml` when present; otherwise uses documented detour factors. Brisbane/Hickman should replace this with OSM shortest paths + OTP/R5.
 
 ---
 
-## 6. Limitations (non-exhaustive)
+## 6. Equity comparison & statistics
 
-1. Point proxies for corridor projects  
-2. Euclidean distance ≠ travel time; no bus network, traffic, or Olympics shuttle (GETS) modeling  
-3. CES/HPI vintages predate final Games operations; disadvantage is baseline community context, not Olympics impact  
-4. Manual geocoding / curation error risk for venues and 28×28  
-5. Using rail-only baseline ignores bus proximity (intentional high-capacity focus)  
-6. HPI drawn from LA County republished layer rather than live HPI API pull in this run  
-7. “Investment” here means spatial proximity to planned/opened project points, not dollars spent in a tract  
-8. Football prelim venues in San Jose / San Diego inflate some long-distance venue minima for southern/northern county tracts relatively little, but are still included
+- Cross-tabs by disadvantage quartile/decile  
+- Spearman correlations; OLS of S2 Δ on disadvantage index  
+- Q4 − Q1 gaps for walk time, transit threshold share, and scenario Δ  
 
 ---
 
-## 7. Reproducibility
+## 7. Benefits and burdens
+
+See `docs/BENEFITS_BURDENS_AND_COMMUNITY.md`. The model measures access benefits; burdens (displacement, construction, security) are **named but not fully quantified**.
+
+---
+
+## 8. Limitations
+
+1. Corridor projects as **points** understate linear coverage.  
+2. Walk network uses **detour factors** unless OSM GraphML is supplied.  
+3. Rail-only GTFS graph (bus not in multimodal router).  
+4. Accessibility ≠ utilization or fare affordability.  
+5. Announced projects may change; statuses become stale.  
+6. Manual geocoding error risk.  
+7. Displacement / rent effects require separate analysis.  
+8. Community listening not yet executed (protocol only).  
+
+---
+
+## 9. Reproducibility
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 bash scripts/run_acquire.sh
+python -m src.analyze.build_disadvantage_index
+python -m src.analyze.run_network_accessibility
 python -m src.analyze.run_spatial_analysis
 python -m src.viz.make_maps_and_charts
 python -m src.viz.build_brief
 ```
 
-Optional: set `CENSUS_API_KEY` and `HPI_API_KEY` in `.env` (see `.env.example`).
+Optional: `CENSUS_API_KEY`, `HPI_API_KEY` in `.env`; optional OSM GraphML at `data/raw/osm/la_walk.graphml`.
+
+---
+
+## 10. Brisbane / Hickman bridge
+
+See `docs/RESEARCH_AGENDA_LA28_TO_BRISBANE.md` and `docs/FULBRIGHT_PREDECESSOR_CHECKLIST.md`.

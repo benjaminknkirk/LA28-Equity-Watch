@@ -24,10 +24,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Prepare Pages artifact from site/
         run: |
-          mkdir -p _site
+          mkdir -p _site/docs
           cp -r site/* _site/
-          # Expose methodology & brief companions at site root copies already in assets
           cp METHODOLOGY.md _site/METHODOLOGY.md
+          cp docs/FULBRIGHT_PREDECESSOR_CHECKLIST.md \
+             docs/RESEARCH_AGENDA_LA28_TO_BRISBANE.md \
+             docs/BENEFITS_BURDENS_AND_COMMUNITY.md \
+             _site/docs/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

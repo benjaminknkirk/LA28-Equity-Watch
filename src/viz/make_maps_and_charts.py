@@ -1,4 +1,4 @@
-"""Generate static choropleth, supporting charts, and Folium interactive map."""
+"""Generate analytical maps/charts for disadvantage, access, scenarios, and gaps."""
 from __future__ import annotations
 
 import json
@@ -29,130 +29,153 @@ plt.rcParams.update(
 )
 
 
-def load_data():
+def save(fig, name: str):
+    for folder in (OUTPUTS / "figures", SITE / "assets"):
+        folder.mkdir(parents=True, exist_ok=True)
+        fig.savefig(folder / name, bbox_inches="tight")
+    plt.close(fig)
+
+
+def main():
+    ensure_dirs(OUTPUTS / "figures", OUTPUTS / "maps", SITE / "assets", SITE / "maps")
     gdf = gpd.read_file(DATA_PROCESSED / "tract_analysis.geojson")
     venues = gpd.read_file(DATA_PROCESSED / "la28_venues.geojson")
     projects = gpd.read_file(DATA_PROCESSED / "metro_28x28.geojson")
-    stops = gpd.read_file(DATA_PROCESSED / "metro_stops.geojson")
-    rail = stops[stops["feed"] == "rail"].copy()
     stats = json.loads((OUTPUTS / "tables" / "stats_summary.json").read_text())
-    xtab = pd.read_csv(OUTPUTS / "tables" / "proximity_share_by_ces_decile.csv")
-    return gdf, venues, projects, rail, stats, xtab
+    equity = pd.read_csv(OUTPUTS / "tables" / "equity_by_disadvantage_quartile.csv")
+    scenario = json.loads((OUTPUTS / "tables" / "scenario_results.json").read_text())
 
-
-def make_choropleth(gdf, venues, projects, rail, out_png: Path):
+    # 1. Disadvantage choropleth + investments
     fig, ax = plt.subplots(figsize=(10, 12))
     gdf.plot(
-        column="ces_percentile",
+        column="disadvantage_index",
         cmap="YlOrRd",
         linewidth=0.05,
         edgecolor="none",
         legend=True,
-        legend_kwds={"label": "CalEnviroScreen 4.0 percentile\n(higher = more burdened)", "shrink": 0.6},
+        legend_kwds={"label": "Composite disadvantage index\n(higher = more disadvantaged)", "shrink": 0.55},
         ax=ax,
         missing_kwds={"color": "lightgrey"},
     )
-    # Rail stops as thin points
-    rail.plot(ax=ax, color="#1a1a1a", markersize=2, alpha=0.35, label="Metro rail stops")
-    projects.plot(ax=ax, color="#0b6e4f", markersize=28, marker="s", alpha=0.9, label="28×28 projects")
-    venues.plot(ax=ax, color="#1d3557", markersize=36, marker="^", alpha=0.9, label="LA28 venues")
-    ax.set_title(
-        "LA County census tracts: CalEnviroScreen disadvantage\n"
-        "with LA28 venues and Metro Twenty-Eight by '28 points"
-    )
+    projects.plot(ax=ax, color="#0b6e4f", markersize=22, marker="s", alpha=0.9)
+    venues.plot(ax=ax, color="#1d3557", markersize=30, marker="^", alpha=0.9)
+    ax.set_title("Composite socioeconomic disadvantage with LA28 venues\nand Metro Twenty-Eight by '28 points")
     ax.set_axis_off()
-    handles = [
-        Line2D([0], [0], marker="^", color="w", markerfacecolor="#1d3557", markersize=10, label="LA28 venues"),
-        Line2D([0], [0], marker="s", color="w", markerfacecolor="#0b6e4f", markersize=9, label="28×28 projects"),
-        Line2D([0], [0], marker="o", color="w", markerfacecolor="#1a1a1a", markersize=5, label="Metro rail stops"),
+    ax.legend(
+        handles=[
+            Line2D([0], [0], marker="^", color="w", markerfacecolor="#1d3557", markersize=10, label="LA28 venues"),
+            Line2D([0], [0], marker="s", color="w", markerfacecolor="#0b6e4f", markersize=9, label="28×28 projects"),
+        ],
+        loc="lower left",
+    )
+    save(fig, "choropleth_disadvantage_investments.png")
+
+    # 2. Projected accessibility change (S2)
+    fig, ax = plt.subplots(figsize=(10, 12))
+    gdf.plot(
+        column="scenario_S2_delta",
+        cmap="RdYlGn",
+        linewidth=0.05,
+        edgecolor="none",
+        legend=True,
+        legend_kwds={"label": "S2 accessibility change\n(full announced 28×28 vs rail baseline)", "shrink": 0.55},
+        ax=ax,
+        missing_kwds={"color": "lightgrey"},
+    )
+    ax.set_title("Prospective accessibility change if announced 28×28 points are delivered")
+    ax.set_axis_off()
+    save(fig, "map_scenario_S2_delta.png")
+
+    # 3. Persistent access deficit: high disadvantage + outside 30-min walk to venue
+    fig, ax = plt.subplots(figsize=(10, 12))
+    gdf.plot(color="#e8e4dc", linewidth=0.02, edgecolor="white", ax=ax)
+    deficit = gdf[(gdf["disadvantage_quartile"] >= 4) & (gdf["venues_within_30min_walk"] < 1)]
+    if len(deficit):
+        deficit.plot(color="#9b2226", ax=ax, linewidth=0.05, edgecolor="none")
+    venues.plot(ax=ax, color="#1d3557", markersize=28, marker="^", alpha=0.85)
+    ax.set_title("Access deficit map: most-disadvantaged tracts (Q4)\noutside 30-minute walk of any LA28 venue")
+    ax.set_axis_off()
+    save(fig, "map_access_deficit_Q4.png")
+
+    # 4. Baseline walk time to venue
+    fig, ax = plt.subplots(figsize=(10, 12))
+    gdf.plot(
+        column="walk_min_venue",
+        cmap="viridis_r",
+        linewidth=0.05,
+        edgecolor="none",
+        legend=True,
+        legend_kwds={"label": "Network-adjusted walk minutes\nto nearest LA28 venue", "shrink": 0.55},
+        ax=ax,
+        missing_kwds={"color": "lightgrey"},
+    )
+    ax.set_title("Baseline walking accessibility to nearest LA28 venue")
+    ax.set_axis_off()
+    save(fig, "map_walk_min_venue.png")
+
+    # Charts
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    ax.bar(equity["disadvantage_quartile"], equity["mean_S2_delta"], color="#4a6741")
+    ax.axhline(0, color="black", lw=0.8)
+    ax.set_xlabel("Composite disadvantage quartile (4 = most disadvantaged)")
+    ax.set_ylabel("Mean S2 accessibility change")
+    ax.set_title("Prospective access gains by disadvantage quartile (full announced scenario)")
+    save(fig, "chart_S2_delta_by_quartile.png")
+
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    ax.plot(equity["disadvantage_quartile"], equity["median_walk_min_venue"], "o-", color="#1d3557")
+    ax.set_xlabel("Composite disadvantage quartile (4 = most disadvantaged)")
+    ax.set_ylabel("Median walk minutes to nearest venue")
+    ax.set_title("Baseline venue walk time by disadvantage quartile")
+    save(fig, "chart_walk_min_by_quartile.png")
+
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    ax.bar(equity["disadvantage_quartile"], equity["share_30min_transit"], color="#457b9d")
+    ax.set_xlabel("Composite disadvantage quartile (4 = most disadvantaged)")
+    ax.set_ylabel("Share of tracts ≤30 min via walk+rail to venue")
+    ax.set_title("30-minute multimodal transit access to venues by quartile")
+    save(fig, "chart_30min_transit_by_quartile.png")
+
+    # Scenario comparison chart
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    labels = ["S1 opened+\nconstruction", "S2 full\nannounced", "S3 operational\nonly (delayed)"]
+    gaps = [
+        scenario.get("S1_opened_plus_construction_Q4_minus_Q1", 0),
+        scenario.get("S2_full_announced_Q4_minus_Q1", 0),
+        scenario.get("S3_operational_only_delayed_Q4_minus_Q1", 0),
     ]
-    ax.legend(handles=handles, loc="lower left", frameon=True)
-    fig.tight_layout()
-    fig.savefig(out_png, bbox_inches="tight")
-    fig.savefig(SITE / "assets" / out_png.name, bbox_inches="tight")
-    plt.close(fig)
+    ax.bar(labels, gaps, color=["#6a994e", "#2a9d8f", "#bc4749"])
+    ax.axhline(0, color="black", lw=0.8)
+    ax.set_ylabel("Q4 − Q1 mean accessibility Δ")
+    ax.set_title("Scenario equity gap (positive = more gain in most-disadvantaged quartile)")
+    save(fig, "chart_scenario_equity_gaps.png")
 
-
-def make_charts(xtab, gdf, stats, out_dir: Path):
-    # Chart 1: mean access change by CES decile
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.bar(xtab["ces_disadvantage_decile"], xtab["mean_access_change"], color="#4a6741", width=0.8)
-    ax.axhline(0, color="black", linewidth=0.8)
-    ax.set_xlabel("CES disadvantage decile (LA County; 10 = most burdened)")
-    ax.set_ylabel("Mean accessibility change")
-    ax.set_title("Accessibility change by CalEnviroScreen disadvantage decile")
-    fig.tight_layout()
-    p1 = out_dir / "access_change_by_decile.png"
-    fig.savefig(p1, bbox_inches="tight")
-    fig.savefig(SITE / "assets" / p1.name, bbox_inches="tight")
-    plt.close(fig)
-
-    # Chart 2: venue distance vs decile
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    summ = (
-        gdf.dropna(subset=["ces_disadvantage_decile"])
-        .groupby("ces_disadvantage_decile")["dist_venue_km"]
-        .median()
-    )
-    ax.plot(summ.index, summ.values, marker="o", color="#1d3557")
-    ax.set_xlabel("CES disadvantage decile (LA County; 10 = most burdened)")
-    ax.set_ylabel("Median distance to nearest LA28 venue (km)")
-    ax.set_title("Venue proximity by disadvantage decile")
-    fig.tight_layout()
-    p2 = out_dir / "venue_distance_by_decile.png"
-    fig.savefig(p2, bbox_inches="tight")
-    fig.savefig(SITE / "assets" / p2.name, bbox_inches="tight")
-    plt.close(fig)
-
-    # Chart 3: scatter access_change vs ces_percentile
-    complete = gdf.dropna(subset=["ces_percentile", "access_change"])
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.scatter(
-        complete["ces_percentile"],
-        complete["access_change"],
-        s=6,
-        alpha=0.25,
-        color="#333333",
-        linewidths=0,
-    )
-    x = np.linspace(complete["ces_percentile"].min(), complete["ces_percentile"].max(), 100)
-    slope = stats["ols_access_change_on_ces_percentile"]["slope"]
-    intercept = stats["ols_access_change_on_ces_percentile"]["intercept"]
-    ax.plot(x, intercept + slope * x, color="#9b2226", linewidth=2, label="OLS fit")
-    ax.set_xlabel("CalEnviroScreen percentile (statewide)")
-    ax.set_ylabel("Accessibility change")
-    ax.set_title(
-        f"Access change vs CES percentile "
-        f"(R²={stats['ols_access_change_on_ces_percentile']['r_squared']:.4f}, "
-        f"p={stats['ols_access_change_on_ces_percentile']['pvalue']:.3f})"
-    )
-    ax.legend()
-    fig.tight_layout()
-    p3 = out_dir / "scatter_access_vs_ces.png"
-    fig.savefig(p3, bbox_inches="tight")
-    fig.savefig(SITE / "assets" / p3.name, bbox_inches="tight")
-    plt.close(fig)
-
-
-def make_folium(gdf, venues, projects, out_html: Path):
-    # Simplify for browser performance
-    simple = gdf[["geoid10", "ces_percentile", "access_change", "dist_venue_km", "geometry"]].copy()
+    # Folium interactive
+    simple = gdf[
+        [
+            "geoid10",
+            "disadvantage_index",
+            "scenario_S2_delta",
+            "walk_min_venue",
+            "within_30min_transit_venue",
+            "geometry",
+        ]
+    ].copy()
     simple["geometry"] = simple.geometry.simplify(0.001)
-    center = [34.05, -118.25]
-    m = folium.Map(location=center, zoom_start=10, tiles="OpenStreetMap")
+    m = folium.Map(location=[34.05, -118.25], zoom_start=10, tiles="OpenStreetMap")
     cmap = LinearColormap(
-        colors=["#ffffcc", "#fd8d3c", "#800026"],
-        vmin=float(simple["ces_percentile"].min()),
-        vmax=float(simple["ces_percentile"].max()),
-        caption="CalEnviroScreen percentile",
+        ["#ffffcc", "#fd8d3c", "#800026"],
+        vmin=float(simple["disadvantage_index"].quantile(0.05)),
+        vmax=float(simple["disadvantage_index"].quantile(0.95)),
+        caption="Composite disadvantage index",
     )
     cmap.add_to(m)
 
-    def style_fn(feature):
-        val = feature["properties"].get("ces_percentile")
+    def style_fn(feat):
+        val = feat["properties"].get("disadvantage_index")
         return {
-            "fillColor": cmap(val) if val is not None else "#cccccc",
-            "color": "#666666",
+            "fillColor": cmap(val) if val is not None else "#ccc",
+            "color": "#666",
             "weight": 0.2,
             "fillOpacity": 0.7,
         }
@@ -161,48 +184,27 @@ def make_folium(gdf, venues, projects, out_html: Path):
         simple.__geo_interface__,
         style_function=style_fn,
         tooltip=folium.GeoJsonTooltip(
-            fields=["geoid10", "ces_percentile", "access_change", "dist_venue_km"],
-            aliases=["Tract", "CES %ile", "Access Δ", "Venue km"],
+            fields=["geoid10", "disadvantage_index", "walk_min_venue", "scenario_S2_delta"],
+            aliases=["Tract", "Disadv. index", "Walk min venue", "S2 Δ access"],
         ),
-        name="CES disadvantage",
     ).add_to(m)
-
-    venue_layer = folium.FeatureGroup(name="LA28 venues")
     for _, row in venues.iterrows():
         folium.CircleMarker(
-            location=[row.geometry.y, row.geometry.x],
-            radius=5,
-            color="#1d3557",
-            fill=True,
-            fill_opacity=0.9,
-            popup=row.get("name", ""),
-        ).add_to(venue_layer)
-    venue_layer.add_to(m)
-
-    proj_layer = folium.FeatureGroup(name="28×28 projects")
+            [row.geometry.y, row.geometry.x], radius=5, color="#1d3557", fill=True, popup=row.get("name", "")
+        ).add_to(m)
     for _, row in projects.iterrows():
         folium.CircleMarker(
-            location=[row.geometry.y, row.geometry.x],
-            radius=4,
-            color="#0b6e4f",
-            fill=True,
-            fill_opacity=0.9,
-            popup=row.get("name", ""),
-        ).add_to(proj_layer)
-    proj_layer.add_to(m)
-
-    folium.LayerControl().add_to(m)
+            [row.geometry.y, row.geometry.x], radius=4, color="#0b6e4f", fill=True, popup=row.get("name", "")
+        ).add_to(m)
+    out_html = OUTPUTS / "maps" / "interactive_ces_map.html"
     m.save(str(out_html))
     m.save(str(SITE / "maps" / out_html.name))
 
+    # Keep legacy filename alias for site
+    import shutil
 
-def main():
-    ensure_dirs(OUTPUTS / "figures", OUTPUTS / "maps", SITE / "assets", SITE / "maps")
-    gdf, venues, projects, rail, stats, xtab = load_data()
-    make_choropleth(gdf, venues, projects, rail, OUTPUTS / "figures" / "choropleth_ces_investments.png")
-    make_charts(xtab, gdf, stats, OUTPUTS / "figures")
-    make_folium(gdf, venues, projects, OUTPUTS / "maps" / "interactive_ces_map.html")
-    print("Figures written to outputs/figures and site/assets")
+    shutil.copy(OUTPUTS / "figures" / "choropleth_disadvantage_investments.png", SITE / "assets" / "choropleth_ces_investments.png")
+    print("Maps/charts written. Key Q4-Q1 S2 gap:", stats.get("Q4_minus_Q1_S2_delta"))
 
 
 if __name__ == "__main__":

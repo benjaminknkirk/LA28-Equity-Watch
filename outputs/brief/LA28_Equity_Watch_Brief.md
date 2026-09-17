@@ -3,83 +3,92 @@
 **LA28 Equity Watch — Research Brief (draft)**  
 **Author:** Benjamin Kirk  
 
-> Draft findings language is generated from pipeline outputs for structure only. Rewrite before citation or Fulbright submission.
+> Draft findings language is generated from pipeline outputs for structure. Rewrite before Fulbright citation.
 
 ---
 
 ## 1. Motivation
 
-Los Angeles will host the 2028 Olympic and Paralympic Games amid a large portfolio of transit and venue-adjacent investments, including Metro’s Twenty-Eight by ’28 program. A recurring equity question in Olympic planning is whether legacy infrastructure improves access for historically disadvantaged communities or concentrates benefits near already well-connected places.
+**Research question:** How are LA28-related infrastructure investments and accessibility gains distributed across communities with different levels of socioeconomic disadvantage?
 
-This prototype builds a **reproducible, tract-level proximity analysis** for Los Angeles County as a methodological pilot for a Fulbright research design comparing LA28 with Brisbane 2032.
+Los Angeles will host the 2028 Olympic and Paralympic Games amid Metro’s Twenty-Eight by ’28 program and a fixed venue map. Olympic legacy debates often claim equity benefits without measuring **how accessibility gains are distributed** across disadvantaged communities. This prototype builds a reproducible, tract-level equity analysis for Los Angeles County as the first stage of a research agenda culminating in Brisbane 2032 (with Hickman / UQ transport-accessibility methods).
+
+**Unit of analysis:** 2010 census tracts, Los Angeles County (n=2346; complete-case n=2319).
 
 ---
 
 ## 2. Data & Methods
 
-See the full documentation in [`METHODOLOGY.md`](METHODOLOGY.md). In brief:
+Full documentation: [`METHODOLOGY.md`](METHODOLOGY.md). Checklist: [`docs/FULBRIGHT_PREDECESSOR_CHECKLIST.md`](docs/FULBRIGHT_PREDECESSOR_CHECKLIST.md).
 
-- **Unit:** 2010 census tracts in Los Angeles County (n=2346; CES-complete n=2297).
-- **Disadvantage:** CalEnviroScreen 4.0 (primary) and Healthy Places Index 3.0 (validation; inverted).
-- **Investments:** Curated LA28 venue points (n=34) and Metro 28×28 representative points (n=28).
-- **Baseline transit:** Nearest Metro rail stop (n=463).
-- **Accessibility change:** ΔA = A(min(d_stop, d_28)) − A(d_stop) where A(d)=1/(1+d) and distances are kilometers (EPSG:3310).
-
-Manual curation was required for venues and 28×28 coordinates; automated sources were used for CES, HPI (LA County open data), ACS 2019, TIGER tracts, and GTFS.
+- **Disadvantage:** Equal-weight z-score composite of poverty, inverted income, no-vehicle share, rent burden ≥30%, overcrowding, and CalEnviroScreen percentile (race/ethnicity as covariates; HPI validation).  
+- **Investments:** Geocoded LA28 venues (competition + village) and Metro 28×28 points (transit, hubs, active transport, highway), each with documented sources.  
+- **Baseline access:** Network-adjusted walking minutes (detour factor 1.35) and GTFS **rail network** multimodal minutes.  
+- **Prospective scenarios:** S0 rail baseline; S1 opened+under construction; S2 full announced; S3 operational-only (delay).  
+- **Sensitivity:** Detour factors, 15/30/45-minute thresholds, facility definitions, CES vs composite.  
+- **Benefits vs burdens:** Access benefits modeled; displacement/construction/security burdens named in [`docs/BENEFITS_BURDENS_AND_COMMUNITY.md`](docs/BENEFITS_BURDENS_AND_COMMUNITY.md).
 
 ---
 
 ## 3. Findings
 
-### Primary map
+### Disadvantage and investment geography
 
-![CalEnviroScreen choropleth with LA28 venues and 28×28 points](outputs/figures/choropleth_ces_investments.png)
+![Composite disadvantage with venues and 28×28 points](outputs/figures/choropleth_disadvantage_investments.png)
 
-### Accessibility change vs disadvantage
+### Baseline accessibility
 
-Spearman correlation between **CES county disadvantage decile** and **accessibility change** is **ρ = -0.093** (p = 7.56e-06). The association is **weak and negative**: more burdened deciles do not show systematically larger proximity gains under the 28×28 point-proxy model.
+Median network-adjusted walk time to the nearest LA28 venue is **122.7 minutes** in the least-disadvantaged quartile (Q1) versus **78.0 minutes** in the most-disadvantaged quartile (Q4) (Q4−Q1 = -44.6 min). Spearman ρ(disadvantage decile, walk minutes) = **-0.238** (p = 3.43e-31).
 
-An OLS regression of accessibility change on statewide CES percentile yields **R² = 0.0000** (p = 0.936) — effectively a **null linear relationship**.
+Share of tracts with ≤30-minute **walk+rail** access to a venue-serving stop: **3.5%** (Q1) vs **12.4%** (Q4). Spearman ρ with disadvantage = **0.141** (p = 7.70e-12).
 
-![Mean accessibility change by CES decile](outputs/figures/access_change_by_decile.png)
+![Walk minutes by quartile](outputs/figures/chart_walk_min_by_quartile.png)
 
-![Scatter: accessibility change vs CES percentile](outputs/figures/scatter_access_vs_ces.png)
+![30-minute transit access by quartile](outputs/figures/chart_30min_transit_by_quartile.png)
 
-About **36.8%** of tracts have a 28×28 representative point closer than their nearest rail stop (mean ΔA = 0.033).
+![Baseline walk-time map](outputs/figures/map_walk_min_venue.png)
 
-### Venue proximity
+### Prospective scenarios
 
-Spearman correlation between CES disadvantage decile and **venue access** is **ρ = 0.196** (p = 2.92e-21): higher-burden tracts tend to be **closer** to curated LA28 venues on average. That pattern is visible in median venue distance by decile.
+Under **S2 (full announced 28×28)**, mean accessibility change is **0.0292** in Q1 vs **0.0283** in Q4 (Q4−Q1 = **-0.0009**). Spearman ρ(disadvantage, S2 Δ) = **-0.113** (p = 0.000). OLS of S2 Δ on the composite index: R² = **0.0000** (p = 0.889).
 
-![Median venue distance by CES decile](outputs/figures/venue_distance_by_decile.png)
+![S2 change map](outputs/figures/map_scenario_S2_delta.png)
 
-### HPI validation
+![S2 delta by quartile](outputs/figures/chart_S2_delta_by_quartile.png)
 
-Using inverted HPI disadvantage deciles, Spearman ρ with accessibility change is **-0.067** (p = 0.001), directionally consistent with the weak CES result.
+![Scenario equity gaps](outputs/figures/chart_scenario_equity_gaps.png)
 
-**Interpretation (placeholder for author rewrite):** Under this proximity specification, planned 28×28 points do **not** show a strong progressive targeting pattern toward the most CalEnviroScreen-burdened tracts. Venue geography, however, overlaps more with higher-burden areas. Neither result should be over-read as a welfare or ridership conclusion.
+### Persistent deficits
 
----
+![Q4 tracts outside 30-minute walk of venues](outputs/figures/map_access_deficit_Q4.png)
 
-## 4. Limitations
-
-- Point proxies for corridor projects; Euclidean distance ≠ travel time.
-- No Games Enhanced Transit System (GETS) / shuttle network modeled.
-- Manual geocoding of venues and 28×28 points.
-- CES/HPI measure baseline community conditions, not Olympic impacts.
-- Rail-only baseline; bus proximity excluded by design.
-- Full limitations list: [`METHODOLOGY.md`](METHODOLOGY.md).
+**Interpretation (placeholder):** Venue geography and existing rail already place many higher-disadvantage tracts nearer to Games destinations than affluent periphery tracts. Announced 28×28 **point-proxied** gains do not show a strong progressive tilt toward the most disadvantaged quartile—an honest null/weak prospective result that motivates earlier, multimodal scenario design in Brisbane.
 
 ---
 
-## 5. Implications for Olympic legacy measurement (toward Brisbane 2032)
+## 4. Policy interpretation
 
-A defensible comparative framework needs (1) a consistent disadvantage index or carefully documented crosswalk, (2) investment inventories with transparent geometry (lines vs points), and (3) pre-registered accessibility metrics that can return **null or adverse** results. This LA County prototype shows that a transparent proximity pipeline is buildable with public data, and that honest null/weak associations are informative for equity claims about Olympic-era investment.
+1. **Underserved:** Q4 tracts outside 30-minute walk access (deficit map) warrant community investment and first/last-mile attention, not only venue-adjacent spectacle.  
+2. **Equity leverage:** Prioritize 28×28 elements that raise access for Q4 in sensitivity runs (BRT/hubs over highway capacity where the metric is neighborhood access).  
+3. **Do not equate proximity with benefit:** Highway projects and security footprints may impose burdens; see benefits/burdens memo.  
+4. **Use before 2032:** Brisbane planners can run analogous scenarios **before** locking capital programs.
 
-Next methodological steps for a Brisbane comparison include travel-time matrices, dollar-weighted investment surfaces, and difference-in-differences designs around project opening dates.
+---
+
+## 5. Limitations
+
+Planned infrastructure may change; accessibility ≠ utilization; announcements incomplete; point proxies for corridors; walk detour factors pending OSM; displacement not modeled; community listening protocol not yet executed. Full list: `METHODOLOGY.md`.
+
+---
+
+## 6. Implications for Brisbane 2032 and Hickman
+
+LA28 Equity Watch **identifies the pattern and proves the workflow**. It also exposes the gap: near-Games descriptive analysis is too late, and rail+detour methods are only a bridge to full multimodal routers and co-designed scenarios. Brisbane’s planning-stage window + Hickman expertise supply the second phase — see [`docs/RESEARCH_AGENDA_LA28_TO_BRISBANE.md`](docs/RESEARCH_AGENDA_LA28_TO_BRISBANE.md).
+
+**Progression:** LA28 identified the problem → spatial analysis demonstrated the pattern → limitations exposed the need for prospective multimodal modeling → Brisbane provides the planning-stage environment → Hickman provides transport-accessibility depth → improved framework returns comparatively to LA28.
 
 ---
 
 ## Attribution
 
-CalEnviroScreen 4.0 © California OEHHA. Healthy Places Index © Public Health Alliance of Southern California / PHI (via LA County Open Data). ACS and TIGER © U.S. Census Bureau. GTFS © LA Metro. Venue list compiled from public Wikipedia/LA28 materials; 28×28 list from Metro Board Report 2023-0756. Analysis code: LA28 Equity Watch repository.
+CalEnviroScreen 4.0 (OEHHA); HPI (Public Health Alliance / PHI via LA County Open Data); ACS & TIGER (U.S. Census Bureau); GTFS (LA Metro). Venues and 28×28 curated from public sources. Analysis: LA28 Equity Watch repository.
