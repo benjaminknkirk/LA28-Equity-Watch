@@ -1,0 +1,114 @@
+{
+  "S0_baseline_rail": [
+    {
+      "disadvantage_quartile": 1,
+      "mean": 0.14513695487821016,
+      "median": 0.10090732684832254
+    },
+    {
+      "disadvantage_quartile": 2,
+      "mean": 0.1897632354389198,
+      "median": 0.13359972456770944
+    },
+    {
+      "disadvantage_quartile": 3,
+      "mean": 0.2226301417110562,
+      "median": 0.16613715373948995
+    },
+    {
+      "disadvantage_quartile": 4,
+      "mean": 0.3184169711726665,
+      "median": 0.28863786899580174
+    }
+  ],
+  "S0_baseline_rail_Q4_minus_Q1": 0.17328001629445633,
+  "S1_opened_plus_construction": [
+    {
+      "disadvantage_quartile": 1,
+      "mean": 0.02270113276405638,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 2,
+      "mean": 0.02304434010742081,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 3,
+      "mean": 0.023078924269722627,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 4,
+      "mean": 0.023994213806356517,
+      "median": 0.0
+    }
+  ],
+  "S1_opened_plus_construction_Q4_minus_Q1": 0.001293081042300137,
+  "S2_full_announced": [
+    {
+      "disadvantage_quartile": 1,
+      "mean": 0.029185018482149785,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 2,
+      "mean": 0.026765560755178875,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 3,
+      "mean": 0.02555215025451411,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 4,
+      "mean": 0.028276011722746873,
+      "median": 0.0
+    }
+  ],
+  "S2_full_announced_Q4_minus_Q1": -0.0009090067594029125,
+  "S3_operational_only_delayed": [
+    {
+      "disadvantage_quartile": 1,
+      "mean": 0.0038787903556743897,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 2,
+      "mean": 0.0076743169586598915,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 3,
+      "mean": 0.010346308760127616,
+      "median": 0.0
+    },
+    {
+      "disadvantage_quartile": 4,
+      "mean": 0.01651295149564687,
+      "median": 0.0
+    }
+  ],
+  "S3_operational_only_delayed_Q4_minus_Q1": 0.01263416113997248,
+  "share_within_30min_transit_by_quartile": {
+    "1": 0.03454231433506045,
+    "2": 0.05,
+    "3": 0.05862068965517241,
+    "4": 0.12413793103448276
+  },
+  "median_walk_min_venue_by_quartile": {
+    "1": 122.69410227276717,
+    "2": 111.35025114638192,
+    "3": 108.63486730658204,
+    "4": 78.04440441175748
+  },
+  "notes": {
+    "S0": "Current Metro rail walk access only",
+    "S1": "Add 28x28 Operational + Under construction points",
+    "S2": "Add all announced 28x28 points (full prospective)",
+    "S3": "Operational only \u2014 selected projects delayed/excluded",
+    "walk_network": "Network-adjusted walking via detour factor; OSM GraphML preferred when available",
+    "rail_network": "GTFS rail stop graph with stop_times edge weights"
+  }
+}

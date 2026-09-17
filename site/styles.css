@@ -1,0 +1,119 @@
+:root {
+  --ink: #1a1a1a;
+  --muted: #555;
+  --rule: #d0d0d0;
+  --bg: #f7f5f1;
+  --paper: #fffcf7;
+  --link: #1d3557;
+  --max: 46rem;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 18px; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, #efeae2 0%, var(--bg) 180px, var(--bg) 100%);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  line-height: 1.55;
+}
+
+.site-header,
+main,
+.site-footer {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem;
+}
+
+.site-header {
+  padding-top: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+
+h1 {
+  font-size: 2.1rem;
+  line-height: 1.15;
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 1.15rem;
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+}
+
+.byline {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin: 2rem 0 0.75rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.35rem;
+}
+
+a { color: var(--link); }
+
+.note { color: var(--muted); font-size: 0.92rem; }
+
+.map-frame {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  height: min(70vh, 560px);
+}
+
+.map-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+figure {
+  margin: 1.25rem 0;
+}
+
+figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+figcaption {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+.charts figure { margin-bottom: 1.75rem; }
+
+.site-footer {
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.88rem;
+  padding-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+  html { font-size: 16px; }
+  h1 { font-size: 1.7rem; }
+  .map-frame { height: 60vh; }
+}

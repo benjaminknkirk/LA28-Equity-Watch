@@ -1,0 +1,35 @@
+venue_id,name,zone,city,state,in_la_county,geocode_query,source,notes
+V01,Los Angeles Memorial Coliseum,Exposition Park,Los Angeles,CA,yes,"Los Angeles Memorial Coliseum, Los Angeles, CA",Wikipedia venues list (2028 Olympics),Opening/athletics cluster
+V02,BMO Stadium,Exposition Park,Los Angeles,CA,yes,"BMO Stadium, Los Angeles, CA",Wikipedia venues list,Exposition Park stadium
+V03,Galen Center,Exposition Park,Los Angeles,CA,yes,"Galen Center, USC, Los Angeles, CA",Wikipedia venues list,USC indoor venue
+V04,Crypto.com Arena,DTLA,Los Angeles,CA,yes,"Crypto.com Arena, Los Angeles, CA",Wikipedia venues list,DTLA arena
+V05,Los Angeles Convention Center,DTLA,Los Angeles,CA,yes,"Los Angeles Convention Center, Los Angeles, CA",Wikipedia venues list,Multiple indoor sports
+V06,Peacock Theater,DTLA,Los Angeles,CA,yes,"Peacock Theater, Los Angeles, CA",Wikipedia venues list,Formerly Microsoft Theater
+V07,Dodger Stadium,DTLA,Los Angeles,CA,yes,"Dodger Stadium, Los Angeles, CA",Wikipedia venues list,Baseball
+V08,Grand Park,DTLA,Los Angeles,CA,yes,"Grand Park, Los Angeles, CA",Wikipedia venues list,Marathon/urban course related
+V09,SoFi Stadium,Inglewood,Inglewood,CA,yes,"SoFi Stadium, Inglewood, CA",Wikipedia venues list,Inglewood sports park
+V10,Intuit Dome,Inglewood,Inglewood,CA,yes,"Intuit Dome, Inglewood, CA",Wikipedia venues list,Basketball
+V11,Dignity Health Sports Park,Carson,Carson,CA,yes,"Dignity Health Sports Park, Carson, CA",Wikipedia venues list,Carson sports park
+V12,Long Beach Arena,Long Beach,Long Beach,CA,yes,"Long Beach Arena, Long Beach, CA",Wikipedia venues list,Long Beach zone
+V13,Long Beach Convention Center,Long Beach,Long Beach,CA,yes,"Long Beach Convention Center, Long Beach, CA",Wikipedia venues list,Aquatics/climbing/shooting cluster
+V14,Belmont Veterans Memorial Pier,Long Beach,Long Beach,CA,yes,"Belmont Pier, Long Beach, CA",Wikipedia venues list,Waterfront
+V15,Long Beach Marine Stadium,Long Beach,Long Beach,CA,yes,"Long Beach Marine Stadium, Long Beach, CA",Wikipedia venues list,Rowing/canoe
+V16,Alamitos Beach,Long Beach,Long Beach,CA,yes,"Alamitos Beach, Long Beach, CA",Wikipedia venues list,Beach volleyball area
+V17,Port of Los Angeles,San Pedro,Los Angeles,CA,yes,"Port of Los Angeles, San Pedro, CA",Wikipedia venues list,Sailing
+V18,Sepulveda Basin Recreation Area,Valley,Los Angeles,CA,yes,"Sepulveda Basin Recreation Area, Van Nuys, CA",Wikipedia venues list,Valley sports park
+V19,UCLA,Westside,Los Angeles,CA,yes,"University of California Los Angeles, Los Angeles, CA",Wikipedia venues list,Olympic Village
+V20,Riviera Country Club,Westside,Los Angeles,CA,yes,"Riviera Country Club, Pacific Palisades, CA",Wikipedia venues list,Golf
+V21,Venice Beach,Westside,Los Angeles,CA,yes,"Venice Beach, Los Angeles, CA",Wikipedia venues list,Marathon start / beach events
+V22,Rose Bowl,Pasadena,Pasadena,CA,yes,"Rose Bowl Stadium, Pasadena, CA",Wikipedia venues list,Football
+V23,Rose Bowl Aquatics Center,Pasadena,Pasadena,CA,yes,"Rose Bowl Aquatics Center, Pasadena, CA",Wikipedia venues list,Aquatics
+V24,Santa Anita Park,Arcadia,Arcadia,CA,yes,"Santa Anita Park, Arcadia, CA",Wikipedia venues list,Equestrian
+V25,Fairplex Cricket Ground,Pomona,Pomona,CA,yes,"Fairplex, Pomona, CA",Wikipedia venues list,Cricket (Pomona Fairgrounds)
+V26,LA Clays Shooting Sports Park,South El Monte,South El Monte,CA,yes,"Whittier Narrows, South El Monte, CA",Wikipedia venues list,Shooting (Whittier Narrows)
+V27,Industry Hills Mountain Bike Course,City of Industry,City of Industry,CA,yes,"Industry Hills, City of Industry, CA",Wikipedia venues list,Mountain bike
+V28,Universal Studios Lot,Universal City,Universal City,CA,yes,"Universal Studios Hollywood, Universal City, CA",Wikipedia venues list,Squash
+V29,Warner Bros Ranch,Burbank,Burbank,CA,yes,"Warner Bros Ranch, Burbank, CA",Wikipedia venues list,Baseball/softball related site
+V30,Griffith Observatory,Griffith Park,Los Angeles,CA,yes,"Griffith Observatory, Los Angeles, CA",Wikipedia venues list,Cycling-related / park cluster
+V31,Honda Center,Anaheim,Anaheim,CA,no,"Honda Center, Anaheim, CA",Wikipedia venues list,Outside LA County — distance target only
+V32,Trestles,San Clemente,San Clemente,CA,no,"Trestles Beach, San Clemente, CA",Wikipedia venues list,Surfing — outside LA County
+V33,PayPal Park,San Jose,San Jose,CA,no,"PayPal Park, San Jose, CA",Wikipedia venues list,Football prelim — CA distance target
+V34,Snapdragon Stadium,San Diego,San Diego,CA,no,"Snapdragon Stadium, San Diego, CA",Wikipedia venues list,Football prelim — CA distance target

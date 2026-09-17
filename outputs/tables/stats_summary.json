@@ -1,0 +1,41 @@
+{
+  "research_question": "How are LA28-related infrastructure investments and accessibility gains distributed across communities with different levels of socioeconomic disadvantage?",
+  "unit_of_analysis": "2010 census tracts, Los Angeles County",
+  "n_tracts": 2346,
+  "n_complete": 2319,
+  "spearman_access_change_vs_disadvantage_decile": {
+    "correlation": -0.11465986689852271,
+    "pvalue": 3.079562618575e-08
+  },
+  "spearman_walk_min_venue_vs_disadvantage_decile": {
+    "correlation": -0.2378662029807607,
+    "pvalue": 3.4331005485809983e-31
+  },
+  "spearman_S2_delta_vs_disadvantage_decile": {
+    "correlation": -0.11275003060645128,
+    "pvalue": 5.2088504051849075e-08
+  },
+  "spearman_30min_transit_vs_disadvantage_decile": {
+    "correlation": 0.1414814188230781,
+    "pvalue": 7.70347575191846e-12
+  },
+  "ols_S2_delta_on_disadvantage_index": {
+    "slope": -0.00024243946113583793,
+    "intercept": 0.027444198830464277,
+    "r_squared": 8.42117855767762e-06,
+    "pvalue": 0.8889206348770156,
+    "std_err": 0.0017356095316033915
+  },
+  "Q1_least_disadvantaged": {
+    "median_walk_min_venue": 122.69410227276715,
+    "share_30min_transit": 0.03454231433506045,
+    "mean_S2_delta": 0.029185018482149768
+  },
+  "Q4_most_disadvantaged": {
+    "median_walk_min_venue": 78.04440441175748,
+    "share_30min_transit": 0.12413793103448276,
+    "mean_S2_delta": 0.028276011722746866
+  },
+  "Q4_minus_Q1_S2_delta": -0.0009090067594029021,
+  "Q4_minus_Q1_median_walk_min": -44.64969786100967
+}
